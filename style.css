@@ -1,0 +1,31 @@
+body{
+font-family: Arial;
+background:#f2f6ff;
+margin:0;
+text-align:center;
+}
+
+#map{
+height:500px;
+width:90%;
+margin:auto;
+border-radius:10px;
+}
+
+.panel{
+width:90%;
+margin:15px auto;
+padding:15px;
+background:white;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+#analisis{
+width:90%;
+margin:20px auto;
+padding:20px;
+background:#eef3ff;
+border-radius:10px;
+text-align:left;
+}

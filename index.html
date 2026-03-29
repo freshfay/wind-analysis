@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Wind Analysis Platform</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<style>
+
+/* ANIMACIÓN GENERAL */
+@keyframes fadeIn{
+from{opacity:0}
+to{opacity:1}
+}
+
+/* MODAL */
+
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.75);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:2000;
+animation:fadeIn 1s;
+}
+
+.modal-content{
+background:#111a30;
+padding:35px;
+border-radius:14px;
+width:650px;
+max-width:90%;
+max-height:80vh;
+overflow-y:auto;
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+animation:scaleIn 0.5s;
+}
+
+.modal-content h2{
+margin-top:0;
+}
+
+.modal-content button{
+margin-top:20px;
+width:100%;
+font-size:16px;
+}
+
+@keyframes scaleIn{
+from{
+transform:scale(0.8);
+opacity:0;
+}
+to{
+transform:scale(1);
+opacity:1;
+}
+}
+
+body{
+margin:0;
+font-family: "Segoe UI", sans-serif;
+background:#0a0f1a;
+color:white;
+overflow-x:hidden;
+}
+
+/* NAVBAR */
+.navbar{
+position:fixed;
+top:0;
+width:100%;
+height:60px;
+background:rgba(5,10,20,0.85);
+backdrop-filter: blur(10px);
+display:flex;
+align-items:center;
+padding-left:40px;
+z-index:1000;
+letter-spacing:1px;
+}
+
+/* HERO */
+.hero{
+height:100vh;
+background:url("imagen.jpg") center/cover no-repeat;
+display:flex;
+align-items:center;
+position:relative;
+}
+
+.overlay{
+position:absolute;
+width:100%;
+height:100%;
+background:linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.9));
+}
+
+.hero-text{
+position:relative;
+font-size:30px;
+max-width:700px;
+margin-left:80px;
+animation:fadeUp 2s ease;
+}
+
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translateY(40px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+.scroll{
+position:absolute;
+bottom:40px;
+right:60px;
+font-size:38px;
+cursor:pointer;
+animation:float 2s infinite;
+}
+
+@keyframes float{
+0%{transform:translateY(0)}
+50%{transform:translateY(15px)}
+100%{transform:translateY(0)}
+}
+
+/* PARTÍCULAS */
+.particle{
+position:absolute;
+width:3px;
+height:3px;
+background:white;
+opacity:0.4;
+animation:wind 12s linear infinite;
+}
+
+@keyframes wind{
+from{ transform:translateX(-200px); }
+to{ transform:translateX(120vw); }
+}
+
+/* SOFTWARE */
+.software{
+padding:80px 40px;
+background:#0d1324;
+animation:fadeIn 2s ease;
+}
+
+.title{
+font-size:34px;
+margin-bottom:25px;
+font-weight:600;
+}
+
+/* PANEL */
+.panel{
+background:#141c33;
+padding:25px;
+border-radius:14px;
+box-shadow:0 0 30px rgba(0,0,0,0.5);
+margin-bottom:25px;
+}
+
+input{
+padding:10px;
+border:none;
+border-radius:8px;
+margin:6px;
+background:#0e1628;
+color:white;
+}
+
+button{
+padding:11px 18px;
+border:none;
+border-radius:10px;
+margin:6px;
+background:linear-gradient(45deg,#2a7fff,#00c3ff);
+color:white;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+transform:scale(1.05);
+box-shadow:0 0 12px #2a7fff;
+}
+
+#map{
+height:520px;
+border-radius:12px;
+margin-top:15px;
+box-shadow:0 0 30px rgba(0,0,0,0.6);
+}
+
+#analisis{
+margin-top:20px;
+background:#121a30;
+padding:25px;
+border-radius:12px;
+display:none;
+animation:fadeUp 1s ease;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+Wind Climate Analysis System
+</div>
+
+<!-- MODAL INICIAL -->
+<div id="introModal" class="modal">
+<div class="modal-content">
+
+<h2>Guía de uso del sistema</h2>
+
+<p>
+Este proyecto integra una maqueta de <b>anemómetro experimental</b> con un
+sistema digital de análisis de viento para terrenos agrícolas.
+</p>
+
+<h3>Paso 1 — Medición con el anemómetro</h3>
+<p>
+Utiliza la maqueta del anemómetro para medir la velocidad del viento en
+diferentes puntos del terreno.
+</p>
+
+<h3>Paso 2 — Registro de datos</h3>
+<p>
+Haz clic en el mapa en el lugar donde realizaste la medición.
+</p>
+
+<h3>Paso 3 — Ingresar datos</h3>
+<p>
+Introduce:
+<br>• Velocidad del viento (m/s)
+<br>• Dirección del viento (°)
+</p>
+
+<p>
+Luego presiona <b>Registrar medición</b>.
+</p>
+
+<h3>Funciones del sistema</h3>
+<p>
+• Visualización del terreno en mapa satelital<br>
+• Registro de puntos de medición<br>
+• Análisis técnico del viento<br>
+• Identificación de zonas agrícolas de riesgo<br>
+• Exportación del reporte
+</p>
+
+<button onclick="cerrarIntro()">Comenzar análisis</button>
+
+</div>
+</div>
+
+<section class="hero">
+<div class="overlay"></div>
+
+<div class="hero-text">
+“no hacemos ciencia para el pueblo, somos el pueblo haciendo ciencia”
+</div>
+
+<div class="scroll" onclick="scrollToSoftware()">↓</div>
+</section>
+
+<section class="software" id="software">
+
+<div class="title">Plataforma de análisis agroclimático</div>
+
+<div class="panel">
+Velocidad del viento (m/s)
+<input id="velocidad" type="number">
+
+Dirección (°)
+<input id="direccion" type="number">
+<br>
+
+<button onclick="guardarPunto()">Registrar medición</button>
+<button onclick="mostrarAnalisis()">Mostrar análisis</button>
+<button onclick="exportarImagen()">Exportar imagen</button>
+<button onclick="exportarPDF()">Exportar PDF</button>
+</div>
+
+<div id="map"></div>
+<div id="analisis"></div>
+
+</section>
+
+<script src="script.js"></script>
+
+<script>
+
+function cerrarIntro(){
+document.getElementById("introModal").style.display="none";
+}
+
+function scrollToSoftware(){
+document.getElementById("software").scrollIntoView({behavior:"smooth"});
+}
+
+function mostrarAnalisis(){
+document.getElementById("analisis").style.display="block";
+analizarDatos();
+}
+
+/* PARTÍCULAS DE VIENTO */
+for(let i=0;i<80;i++){
+let p=document.createElement("div");
+p.className="particle";
+p.style.top=Math.random()*100+"vh";
+p.style.animationDuration=(8+Math.random()*10)+"s";
+p.style.opacity=Math.random();
+document.body.appendChild(p);
+}
+
+</script>
+
+</body>
+</html>
