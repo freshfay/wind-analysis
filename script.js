@@ -314,3 +314,13 @@ pdf.save("reporte_viento_agricola.pdf");
 function cerrarIntro(){
 document.getElementById("introModal").style.display="none";
 }
+
+var map = L.map('map').setView([-0.2, -78.5], 15);
+
+setTimeout(function(){
+map.invalidateSize();
+}, 500);
+
+map.touchZoom.enable();
+map.doubleClickZoom.enable();
+map.scrollWheelZoom.enable();
