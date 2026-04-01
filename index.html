@@ -18,8 +18,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <style>
-    /* FUENTES */
+
+<style>
+
+/* FUENTES */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;500&display=swap');
 
 /* PALETA */
@@ -37,7 +39,7 @@ body{
 margin:0;
 font-family: Inter, sans-serif;
 background:
-linear-gradient(rgba(5,8,15,0.25), rgba(5,8,15,0.55)),
+linear-gradient(rgba(5,8,15,0.15), rgba(5,8,15,0.45)),
 url("imagen.jpg");
 background-size:cover;
 background-position:center;
@@ -52,7 +54,7 @@ position:fixed;
 top:0;
 width:100%;
 height:60px;
-background:rgba(10,10,15,0.65);
+background:rgba(10,10,15,0.7);
 backdrop-filter: blur(10px);
 display:flex;
 align-items:center;
@@ -68,14 +70,14 @@ border-bottom:1px solid rgba(0,180,255,0.2);
 .hero{
 height:100vh;
 background:
-linear-gradient(rgba(10,0,0,0.15), rgba(5,8,15,0.45)),
+linear-gradient(rgba(10,0,0,0.25), rgba(5,8,15,0.35)),
 url("imagen.jpg") center/cover no-repeat;
 display:flex;
 align-items:center;
 position:relative;
 }
 
-/* ILUMINACIÓN CINEMATOGRÁFICA */
+/* LUZ CINEMATOGRÁFICA */
 .hero::before{
 content:"";
 position:absolute;
@@ -85,7 +87,7 @@ width:100%;
 height:100%;
 background:
 radial-gradient(circle at center,
-rgba(232,93,4,0.12),
+rgba(232,93,4,0.18),
 transparent 60%);
 pointer-events:none;
 }
@@ -127,7 +129,7 @@ color:var(--naranja);
 
 /* PANEL */
 .panel{
-background:rgba(15,20,30,0.65);
+background:rgba(15,20,30,0.7);
 backdrop-filter: blur(8px);
 padding:25px;
 border-radius:14px;
@@ -166,7 +168,6 @@ color:white;
 cursor:pointer;
 transition:0.35s;
 font-weight:500;
-letter-spacing:0.5px;
 }
 
 button:hover{
@@ -190,35 +191,10 @@ border:1px solid rgba(193,18,31,0.25);
 /* ANALISIS */
 #analisis{
 margin-top:20px;
-background:rgba(15,15,25,0.85);
+background:rgba(15,15,25,0.9);
 padding:25px;
 border-radius:12px;
 display:none;
-border:1px solid rgba(232,93,4,0.2);
-}
-
-/* DASHBOARD */
-.dashboard{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:15px;
-margin-top:20px;
-}
-
-.metric{
-background:rgba(10,15,25,0.9);
-padding:18px;
-border-radius:12px;
-text-align:center;
-border:1px solid rgba(193,18,31,0.25);
-box-shadow:0 0 15px rgba(193,18,31,0.15);
-}
-
-.metric h3{
-margin:0;
-font-size:28px;
-color:var(--naranja);
-font-family: Orbitron;
 }
 
 /* MODAL */
@@ -240,10 +216,9 @@ background:linear-gradient(145deg,#140000,#0a0f1c);
 padding:35px;
 border-radius:14px;
 width:650px;
+max-width:90%;
 max-height:80vh;
 overflow-y:auto;
-box-shadow:0 0 60px rgba(193,18,31,0.3);
-border:1px solid rgba(232,93,4,0.2);
 }
 
 /* PARTICULAS */
@@ -258,23 +233,13 @@ animation:wind 12s linear infinite;
 
 /* ANIMACIONES */
 @keyframes fadeUp{
-from{
-opacity:0;
-transform:translateY(40px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
+from{opacity:0; transform:translateY(40px);}
+to{opacity:1; transform:translateY(0);}
 }
 
 @keyframes wind{
-from{
-transform:translateX(-200px);
-}
-to{
-transform:translateX(120vw);
-}
+from{transform:translateX(-200px);}
+to{transform:translateX(120vw);}
 }
 
 /* RESPONSIVE */
@@ -300,8 +265,8 @@ font-size:14px;
 }
 
 }
-  </style>
 
+</style>
 </head>
 
 <body>
@@ -310,20 +275,21 @@ font-size:14px;
 Wind Climate Analysis System
 </div>
 
+<!-- MODAL INICIAL -->
 <div id="introModal" class="modal">
 <div class="modal-content">
 
-<h2>Guía del sistema</h2>
+<h2>Instrucciones del sistema</h2>
 
 <p>
-Este sistema integra un anemómetro experimental con análisis digital del viento en terrenos agrícolas.
+Este software trabaja junto con la maqueta del <b>anemómetro experimental</b>.
 </p>
 
 <p>
-1. Mide el viento con el anemómetro.<br>
-2. Haz clic en el mapa.<br>
-3. Registra velocidad y dirección.<br>
-4. Genera el análisis.
+1. Usa el anemómetro para medir la velocidad del viento en distintos puntos del terreno.<br>
+2. Luego selecciona el punto en el mapa.<br>
+3. Registra manualmente la velocidad y dirección del viento.<br>
+4. El sistema generará el análisis climático del área.
 </p>
 
 <button onclick="cerrarIntro()">Comenzar</button>
@@ -332,13 +298,11 @@ Este sistema integra un anemómetro experimental con análisis digital del vient
 </div>
 
 <section class="hero">
-<div class="overlay"></div>
 
 <div class="hero-text">
 “No hacemos ciencia para el pueblo, somos el pueblo haciendo ciencia”.
 </div>
 
-<div class="scroll" onclick="scrollToSoftware()">↓</div>
 </section>
 
 <section class="software" id="software">
@@ -374,16 +338,15 @@ function cerrarIntro(){
 document.getElementById("introModal").style.display="none";
 }
 
-function scrollToSoftware(){
-document.getElementById("software").scrollIntoView({behavior:"smooth"});
-}
-
 function mostrarAnalisis(){
 document.getElementById("analisis").style.display="block";
+if(typeof analizarDatos === "function"){
 analizarDatos();
 }
+}
 
-for(let i=0;i<80;i++){
+/* PARTICULAS */
+for(let i=0;i<70;i++){
 let p=document.createElement("div");
 p.className="particle";
 p.style.top=Math.random()*100+"vh";
