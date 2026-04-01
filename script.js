@@ -1,326 +1,237 @@
-// =============================
-// CREAR MAPA
-// =============================
-var map = L.map('map').setView([-0.18, -78.47], 13);
+/// MAPA
+var map = L.map('map').setView([-0.22, -78.51], 13);
 
-// =============================
-// CAPAS DEL MAPA
-// =============================
-
-// Mapa normal
-var mapaNormal = L.tileLayer(
+// CAPA SATELITAL
+var satelite = L.tileLayer(
 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 {
-attribution: 'OpenStreetMap'
-}
-);
-
-// Satélite
-var mapaSatelital = L.tileLayer(
-'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-{
-attribution: 'Esri Satellite'
-}
-);
-
-// Etiquetas (modo híbrido)
-var etiquetas = L.tileLayer(
-'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-{
-opacity: 0.35
-}
-);
-
-// Híbrido
-var mapaHibrido = L.layerGroup([mapaSatelital, etiquetas]);
-
-// Activar mapa inicial
-mapaNormal.addTo(map);
-
-// Selector de capas
-L.control.layers({
-"Mapa": mapaNormal,
-"Satélite": mapaSatelital,
-"Híbrido": mapaHibrido
+maxZoom: 19
 }).addTo(map);
 
-// =============================
 // BUSCADOR
-// =============================
 L.Control.geocoder().addTo(map);
 
-// =============================
-// VARIABLES
-// =============================
-let datosViento = [];
-let puntoTemporal = null;
-let capaCalor = null;
-let zonas = [];
-let drawnItems = new L.FeatureGroup();
-let areaTerreno = 0;
-
+// DIBUJO DE TERRENO
+var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
-// =============================
-// DIBUJAR TERRENO
-// =============================
 var drawControl = new L.Control.Draw({
-edit: { featureGroup: drawnItems },
-draw: {
-polygon:true,
-rectangle:true,
-circle:false,
-polyline:false,
-marker:false
-}
+edit: { featureGroup: drawnItems }
 });
-
 map.addControl(drawControl);
 
-// Guardar terreno y calcular área
-map.on(L.Draw.Event.CREATED, function (event) {
-
-var layer = event.layer;
-drawnItems.addLayer(layer);
-
-if(layer.getLatLngs){
-
-let latlngs = layer.getLatLngs()[0];
-let area = L.GeometryUtil.geodesicArea(latlngs);
-areaTerreno = area / 10000;
-
-}
-
+map.on(L.Draw.Event.CREATED, function (e) {
+drawnItems.addLayer(e.layer);
 });
 
-// =============================
+// DATOS
+let puntos = [];
+let ultimoClick = null;
+
 // CLICK EN MAPA
-// =============================
-map.on('click', function(e){
-puntoTemporal = e.latlng;
+map.on("click", function(e){
+ultimoClick = e.latlng;
 });
 
-// =============================
-// GUARDAR MEDICIÓN
-// =============================
+// GUARDAR PUNTO
 function guardarPunto(){
-
-if(!puntoTemporal){
-alert("Haz clic en el mapa primero.");
-return;
-}
 
 let velocidad = parseFloat(document.getElementById("velocidad").value);
 let direccion = parseFloat(document.getElementById("direccion").value);
 
-if(isNaN(velocidad) || isNaN(direccion)){
-alert("Datos incorrectos.");
+if(!ultimoClick){
+alert("Selecciona un punto en el mapa");
 return;
 }
 
-datosViento.push({
-lat:puntoTemporal.lat,
-lon:puntoTemporal.lng,
-velocidad:velocidad,
-direccion:direccion
-});
+let punto = {
+lat: ultimoClick.lat,
+lng: ultimoClick.lng,
+velocidad: velocidad,
+direccion: direccion
+};
 
-L.marker(puntoTemporal).addTo(map)
+puntos.push(punto);
+
+// MARCADOR
+L.marker([punto.lat, punto.lng])
+.addTo(map)
 .bindPopup("Velocidad: "+velocidad+" m/s<br>Dirección: "+direccion+"°");
 
-dibujarFlecha(puntoTemporal, velocidad, direccion);
-generarMapaCalor();
-clasificarZonas();
+// FLECHA DE VIENTO
+dibujarViento(punto);
 
+actualizarGrafica();
 }
 
-// =============================
-// FLECHAS DE VIENTO
-// =============================
-function dibujarFlecha(pos, velocidad, direccion){
+// DIBUJAR DIRECCIÓN DEL VIENTO
+function dibujarViento(p){
 
-let distancia = velocidad * 20;
-let rad = direccion * Math.PI / 180;
+let distancia = 0.002;
 
-let lat2 = pos.lat + (distancia * Math.cos(rad)) / 10000;
-let lon2 = pos.lng + (distancia * Math.sin(rad)) / 10000;
+let lat2 = p.lat + distancia * Math.cos(p.direccion * Math.PI / 180);
+let lng2 = p.lng + distancia * Math.sin(p.direccion * Math.PI / 180);
 
 L.polyline([
-[pos.lat,pos.lng],
-[lat2,lon2]
-]).addTo(map);
-
-}
-
-// =============================
-// MAPA DE CALOR
-// =============================
-function generarMapaCalor(){
-
-if(capaCalor){
-map.removeLayer(capaCalor);
-}
-
-let puntos = datosViento.map(d => [d.lat,d.lon,d.velocidad]);
-
-capaCalor = L.heatLayer(puntos,{radius:25, blur:20}).addTo(map);
-
-}
-
-// =============================
-// CLASIFICAR ZONAS AGRÍCOLAS
-// =============================
-function clasificarZonas(){
-
-zonas.forEach(z=>map.removeLayer(z));
-zonas=[];
-
-datosViento.forEach(d=>{
-
-let color="green";
-
-if(d.velocidad>6) color="red";
-else if(d.velocidad>3) color="orange";
-
-let zona = L.circle([d.lat,d.lon],{
-radius:50,
-color:color,
-fillOpacity:0.45
+[p.lat, p.lng],
+[lat2, lng2]
+], {
+color:"cyan",
+weight:3
 }).addTo(map);
 
-zonas.push(zona);
+}
 
-});
+// HEATMAP
+let heatLayer = L.heatLayer([], {radius:25}).addTo(map);
+
+function actualizarHeatmap(){
+
+let data = puntos.map(p => [p.lat, p.lng, p.velocidad]);
+heatLayer.setLatLngs(data);
 
 }
 
-// =============================
-// ANALISIS PROFESIONAL
-// =============================
+// ANALISIS TECNICO
 function analizarDatos(){
 
-if(datosViento.length===0){
-document.getElementById("analisis").innerHTML="No hay datos registrados.";
+if(puntos.length === 0){
+document.getElementById("analisis").innerHTML =
+"No hay datos aún.";
 return;
 }
 
-let suma=0;
-let vmax=0;
-let vmin=999;
+actualizarHeatmap();
 
-let vx=0;
-let vy=0;
+let promedio =
+puntos.reduce((a,b)=>a+b.velocidad,0)/puntos.length;
 
-datosViento.forEach(d=>{
-suma+=d.velocidad;
+let max =
+Math.max(...puntos.map(p=>p.velocidad));
 
-if(d.velocidad>vmax) vmax=d.velocidad;
-if(d.velocidad<vmin) vmin=d.velocidad;
+let min =
+Math.min(...puntos.map(p=>p.velocidad));
 
-vx+=d.velocidad*Math.cos(d.direccion*Math.PI/180);
-vy+=d.velocidad*Math.sin(d.direccion*Math.PI/180);
-});
+let zona = "";
 
-let prom=suma/datosViento.length;
-let dir=Math.atan2(vy,vx)*180/Math.PI;
-if(dir<0) dir+=360;
-
-let erosion="Baja";
-if(vmax>6) erosion="Moderada";
-if(vmax>9) erosion="Alta";
-
-let terrenoTexto = areaTerreno > 0 
-? areaTerreno.toFixed(2) + " hectáreas"
-: "No definido (dibuje el terreno en el mapa)";
+if(promedio > 5){
+zona = "Zona con vientos fuertes (posible impacto en cultivos altos)";
+}
+else if(promedio > 3){
+zona = "Zona de viento moderado adecuada para ventilación natural";
+}
+else{
+zona = "Zona de viento bajo, condiciones estables";
+}
 
 document.getElementById("analisis").innerHTML = `
+<h3>Informe técnico del viento</h3>
 
-<div style="font-size:16px; line-height:1.7">
+Promedio de velocidad: ${promedio.toFixed(2)} m/s<br>
+Velocidad máxima: ${max} m/s<br>
+Velocidad mínima: ${min} m/s<br><br>
 
-<h2>Informe Técnico Agroclimático del Terreno</h2>
-<hr>
-
-<h3>Datos del Terreno</h3>
-Área total del terreno: <b>${terrenoTexto}</b><br>
-Número de puntos analizados: <b>${datosViento.length}</b>
-
-<br>
-
-<h3>Comportamiento del Viento</h3>
-Velocidad promedio: <b>${prom.toFixed(2)} m/s</b><br>
-Velocidad máxima registrada: <b>${vmax.toFixed(2)} m/s</b><br>
-Velocidad mínima registrada: <b>${vmin.toFixed(2)} m/s</b><br>
-Dirección predominante del viento: <b>${dir.toFixed(1)}°</b>
-
-<br>
-
-<h3>Evaluación Agroclimática</h3>
-Riesgo de erosión eólica: <b>${erosion}</b><br>
-
-El análisis indica que la dinámica del viento en el terreno
-está influenciada por la topografía local, la cobertura
-vegetal circundante y la distribución térmica del suelo.
+Evaluación agroclimática:<br>
+${zona}
 
 <br><br>
+Interpretación científica:<br>
+El patrón de viento sugiere un comportamiento
+microclimático del terreno que puede influir en:
 
-<h3>Interpretación Técnica</h3>
-Las zonas con velocidades superiores a 6 m/s pueden
-experimentar mayor pérdida de humedad del suelo,
-incremento de erosión superficial y reducción de
-eficiencia en aplicaciones agrícolas.
-
-<br><br>
-
-<h3>Recomendaciones Agronómicas</h3>
-
-• Implementar barreras rompeviento naturales.<br>
-• Orientar los cultivos perpendicularmente al viento dominante.<br>
-• Mantener cobertura vegetal del suelo.<br>
-• Optimizar horarios de riego.<br>
-• Evitar fumigación durante ráfagas fuertes.
-
-</div>
+• Dispersión de semillas<br>
+• Evaporación del suelo<br>
+• Polinización natural<br>
+• Riesgo de daño en cultivos
 `;
+
 }
 
-// =============================
+// GRAFICA
+let grafica;
+
+function actualizarGrafica(){
+
+let datos = puntos.map(p=>p.velocidad);
+
+let canvas = document.getElementById("grafica");
+
+if(!canvas){
+canvas = document.createElement("canvas");
+canvas.id = "grafica";
+canvas.style.marginTop = "20px";
+document.getElementById("analisis").appendChild(canvas);
+}
+
+if(grafica){
+grafica.destroy();
+}
+
+grafica = new Chart(canvas, {
+type:"line",
+data:{
+labels:datos.map((_,i)=>"P"+(i+1)),
+datasets:[{
+label:"Velocidad del viento",
+data:datos,
+borderColor:"cyan",
+tension:0.3
+}]
+},
+options:{
+responsive:true
+}
+});
+
+}
+
 // EXPORTAR IMAGEN
-// =============================
 function exportarImagen(){
+
 html2canvas(document.body).then(canvas=>{
-let link=document.createElement("a");
-link.download="mapa_viento.png";
-link.href=canvas.toDataURL();
+let link = document.createElement("a");
+link.download = "analisis_viento.png";
+link.href = canvas.toDataURL();
 link.click();
+});
+
+}
+
+// EXPORTAR PDF
+function exportarPDF(){
+
+html2canvas(document.body).then(canvas=>{
+
+const { jsPDF } = window.jspdf;
+let pdf = new jsPDF();
+
+pdf.addImage(canvas.toDataURL("image/png"),
+"PNG",
+10,
+10,
+190,
+0);
+
+pdf.save("reporte_viento.pdf");
+
 });
 }
 
-// =============================
-// EXPORTAR PDF
-// =============================
-async function exportarPDF(){
+// MODO PRESENTACION
+let modo = false;
 
-const { jsPDF } = window.jspdf;
+document.addEventListener("keydown", function(e){
 
-let canvas = await html2canvas(document.body);
-let img = canvas.toDataURL("image/png");
+if(e.key === "p"){
 
-let pdf = new jsPDF("landscape");
-pdf.addImage(img,"PNG",10,10,270,150);
-pdf.save("reporte_viento_agricola.pdf");
+modo = !modo;
+
+document.body.style.background =
+modo ? "#000814" : "";
+
+document.querySelector(".navbar").style.display =
+modo ? "none" : "flex";
 
 }
 
-function cerrarIntro(){
-document.getElementById("introModal").style.display="none";
-}
-
-var map = L.map('map').setView([-0.2, -78.5], 15);
-
-setTimeout(function(){
-map.invalidateSize();
-}, 500);
-
-map.touchZoom.enable();
-map.doubleClickZoom.enable();
-map.scrollWheelZoom.enable();
+});
