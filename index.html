@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Wind Analysis Platform</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -16,13 +19,15 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
-<style>/* FUENTE CIENTÍFICA */
+<style>
+
+/* FUENTES */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;500&display=swap');
 
 body{
 margin:0;
-font-family: Inter, sans-serif;
-background: radial-gradient(circle at top, #0b1220, #05080f);
+font-family:Inter;
+background: radial-gradient(circle at top,#0b1220,#05080f);
 color:#e8f0ff;
 overflow-x:hidden;
 }
@@ -33,15 +38,15 @@ position:fixed;
 top:0;
 width:100%;
 height:60px;
-background:rgba(6,12,22,0.85);
+background:rgba(6,12,22,0.9);
 backdrop-filter: blur(12px);
 display:flex;
 align-items:center;
 padding-left:40px;
 z-index:1000;
-letter-spacing:2px;
-font-family: Orbitron;
+font-family:Orbitron;
 color:#7cc7ff;
+letter-spacing:2px;
 border-bottom:1px solid rgba(120,200,255,0.15);
 }
 
@@ -49,75 +54,85 @@ border-bottom:1px solid rgba(120,200,255,0.15);
 .hero{
 height:100vh;
 background:
-linear-gradient(rgba(5,10,20,0.75), rgba(5,10,20,0.95)),
+linear-gradient(rgba(5,10,20,0.75),rgba(5,10,20,0.95)),
 url("imagen.jpg") center/cover no-repeat;
 display:flex;
 align-items:center;
 position:relative;
 }
 
+.overlay{
+position:absolute;
+width:100%;
+height:100%;
+background: radial-gradient(circle at center,transparent,rgba(0,0,0,0.7));
+}
+
 .hero-text{
 position:relative;
-font-size:32px;
+font-size:34px;
 max-width:750px;
 margin-left:80px;
 line-height:1.5;
-font-weight:500;
 animation:fadeUp 2s ease;
 }
 
-/* EFECTO DE BRILLO CIENTÍFICO */
 .hero-text::after{
 content:"";
 display:block;
 height:2px;
-width:200px;
+width:220px;
 margin-top:15px;
 background:linear-gradient(90deg,#2a7fff,#00e0ff);
 }
 
-/* SOFTWARE SECTION */
+/* SCROLL */
+.scroll{
+position:absolute;
+bottom:40px;
+right:60px;
+font-size:38px;
+cursor:pointer;
+animation:float 2s infinite;
+}
+
+@keyframes float{
+0%{transform:translateY(0)}
+50%{transform:translateY(15px)}
+100%{transform:translateY(0)}
+}
+
+/* SOFTWARE */
 .software{
 padding:90px 40px;
 background:linear-gradient(180deg,#060b16,#0b1326);
-animation:fadeIn 2s ease;
 }
 
 .title{
 font-size:36px;
-margin-bottom:25px;
-font-weight:600;
-font-family: Orbitron;
+font-family:Orbitron;
 color:#8ad7ff;
+margin-bottom:25px;
 }
 
-/* PANEL DE CONTROL */
+/* PANEL */
 .panel{
 background:linear-gradient(145deg,#0f1a33,#0b1428);
 padding:25px;
 border-radius:14px;
-box-shadow:
-0 0 30px rgba(0,0,0,0.6),
-inset 0 0 12px rgba(100,200,255,0.05);
-margin-bottom:25px;
+box-shadow:0 0 30px rgba(0,0,0,0.6);
 border:1px solid rgba(100,200,255,0.08);
+margin-bottom:20px;
 }
 
 /* INPUTS */
 input{
 padding:11px;
-border:none;
 border-radius:8px;
-margin:6px;
+border:1px solid rgba(100,200,255,0.1);
 background:#081121;
 color:white;
-border:1px solid rgba(100,200,255,0.1);
-}
-
-input:focus{
-outline:none;
-border:1px solid #2a7fff;
-box-shadow:0 0 10px rgba(0,120,255,0.3);
+margin:6px;
 }
 
 /* BOTONES */
@@ -125,20 +140,16 @@ button{
 padding:12px 18px;
 border:none;
 border-radius:10px;
-margin:6px;
 background:linear-gradient(45deg,#1f6fff,#00c3ff);
 color:white;
 cursor:pointer;
-transition:0.35s;
-font-weight:500;
-letter-spacing:0.5px;
+transition:0.3s;
+margin:6px;
 }
 
 button:hover{
 transform:translateY(-2px);
-box-shadow:
-0 0 14px #2a7fff,
-0 0 30px rgba(0,150,255,0.3);
+box-shadow:0 0 14px #2a7fff;
 }
 
 /* MAPA */
@@ -146,9 +157,7 @@ box-shadow:
 height:520px;
 border-radius:14px;
 margin-top:15px;
-box-shadow:
-0 0 35px rgba(0,0,0,0.8),
-0 0 40px rgba(0,120,255,0.1);
+box-shadow:0 0 35px rgba(0,0,0,0.8);
 border:1px solid rgba(100,200,255,0.1);
 }
 
@@ -159,8 +168,6 @@ background:linear-gradient(145deg,#0c162d,#091224);
 padding:25px;
 border-radius:12px;
 display:none;
-animation:fadeUp 1s ease;
-border:1px solid rgba(100,200,255,0.1);
 }
 
 /* MODAL */
@@ -184,11 +191,9 @@ border-radius:14px;
 width:650px;
 max-height:80vh;
 overflow-y:auto;
-box-shadow:0 0 50px rgba(0,0,0,0.8);
-border:1px solid rgba(120,200,255,0.15);
 }
 
-/* PARTÍCULAS DE VIENTO */
+/* PARTÍCULAS */
 .particle{
 position:absolute;
 width:3px;
@@ -198,26 +203,47 @@ opacity:0.5;
 animation:wind 12s linear infinite;
 }
 
-/* ANIMACIONES */
 @keyframes fadeUp{
-from{
-opacity:0;
-transform:translateY(40px);
-}
-to{
-opacity:1;
-transform:translateY(0);
-}
+from{opacity:0;transform:translateY(40px);}
+to{opacity:1;transform:translateY(0);}
 }
 
 @keyframes wind{
-from{
-transform:translateX(-200px);
+from{transform:translateX(-200px);}
+to{transform:translateX(120vw);}
 }
-to{
-transform:translateX(120vw);
+
+/* RESPONSIVE */
+@media(max-width:768px){
+
+.hero-text{
+font-size:22px;
+margin:30px;
 }
-}</style>
+
+.software{
+padding:60px 20px;
+}
+
+#map{
+height:420px;
+}
+
+button{
+width:100%;
+}
+
+input{
+width:100%;
+}
+
+.scroll{
+right:20px;
+}
+
+}
+
+</style>
 </head>
 
 <body>
@@ -226,49 +252,23 @@ transform:translateX(120vw);
 Wind Climate Analysis System
 </div>
 
-<!-- MODAL INICIAL -->
 <div id="introModal" class="modal">
 <div class="modal-content">
 
-<h2>Guía de uso del sistema</h2>
+<h2>Guía del sistema</h2>
 
 <p>
-Este proyecto integra una maqueta de <b>anemómetro experimental</b> con un
-sistema digital de análisis de viento para terrenos agrícolas.
-</p>
-
-<h3>Paso 1 — Medición con el anemómetro</h3>
-<p>
-Utiliza la maqueta del anemómetro para medir la velocidad del viento en
-diferentes puntos del terreno.
-</p>
-
-<h3>Paso 2 — Registro de datos</h3>
-<p>
-Haz clic en el mapa en el lugar donde realizaste la medición.
-</p>
-
-<h3>Paso 3 — Ingresar datos</h3>
-<p>
-Introduce:
-<br>• Velocidad del viento (m/s)
-<br>• Dirección del viento (°)
+Este sistema integra un anemómetro experimental con análisis digital del viento en terrenos agrícolas.
 </p>
 
 <p>
-Luego presiona <b>Registrar medición</b>.
+1. Mide el viento con el anemómetro.<br>
+2. Haz clic en el mapa.<br>
+3. Registra velocidad y dirección.<br>
+4. Genera el análisis.
 </p>
 
-<h3>Funciones del sistema</h3>
-<p>
-• Visualización del terreno en mapa satelital<br>
-• Registro de puntos de medición<br>
-• Análisis técnico del viento<br>
-• Identificación de zonas agrícolas de riesgo<br>
-• Exportación del reporte
-</p>
-
-<button onclick="cerrarIntro()">Comenzar análisis</button>
+<button onclick="cerrarIntro()">Comenzar</button>
 
 </div>
 </div>
@@ -288,17 +288,19 @@ Luego presiona <b>Registrar medición</b>.
 <div class="title">Plataforma de análisis agroclimático</div>
 
 <div class="panel">
-Velocidad del viento (m/s)
+Velocidad del viento
 <input id="velocidad" type="number">
 
-Dirección (°)
+Dirección
 <input id="direccion" type="number">
+
 <br>
 
 <button onclick="guardarPunto()">Registrar medición</button>
 <button onclick="mostrarAnalisis()">Mostrar análisis</button>
 <button onclick="exportarImagen()">Exportar imagen</button>
 <button onclick="exportarPDF()">Exportar PDF</button>
+
 </div>
 
 <div id="map"></div>
@@ -323,13 +325,11 @@ document.getElementById("analisis").style.display="block";
 analizarDatos();
 }
 
-/* PARTÍCULAS DE VIENTO */
 for(let i=0;i<80;i++){
 let p=document.createElement("div");
 p.className="particle";
 p.style.top=Math.random()*100+"vh";
 p.style.animationDuration=(8+Math.random()*10)+"s";
-p.style.opacity=Math.random();
 document.body.appendChild(p);
 }
 
