@@ -16,7 +16,208 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
+<style>/* FUENTE CIENTÍFICA */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;500&display=swap');
 
+body{
+margin:0;
+font-family: Inter, sans-serif;
+background: radial-gradient(circle at top, #0b1220, #05080f);
+color:#e8f0ff;
+overflow-x:hidden;
+}
+
+/* NAVBAR */
+.navbar{
+position:fixed;
+top:0;
+width:100%;
+height:60px;
+background:rgba(6,12,22,0.85);
+backdrop-filter: blur(12px);
+display:flex;
+align-items:center;
+padding-left:40px;
+z-index:1000;
+letter-spacing:2px;
+font-family: Orbitron;
+color:#7cc7ff;
+border-bottom:1px solid rgba(120,200,255,0.15);
+}
+
+/* HERO */
+.hero{
+height:100vh;
+background:
+linear-gradient(rgba(5,10,20,0.75), rgba(5,10,20,0.95)),
+url("imagen.jpg") center/cover no-repeat;
+display:flex;
+align-items:center;
+position:relative;
+}
+
+.hero-text{
+position:relative;
+font-size:32px;
+max-width:750px;
+margin-left:80px;
+line-height:1.5;
+font-weight:500;
+animation:fadeUp 2s ease;
+}
+
+/* EFECTO DE BRILLO CIENTÍFICO */
+.hero-text::after{
+content:"";
+display:block;
+height:2px;
+width:200px;
+margin-top:15px;
+background:linear-gradient(90deg,#2a7fff,#00e0ff);
+}
+
+/* SOFTWARE SECTION */
+.software{
+padding:90px 40px;
+background:linear-gradient(180deg,#060b16,#0b1326);
+animation:fadeIn 2s ease;
+}
+
+.title{
+font-size:36px;
+margin-bottom:25px;
+font-weight:600;
+font-family: Orbitron;
+color:#8ad7ff;
+}
+
+/* PANEL DE CONTROL */
+.panel{
+background:linear-gradient(145deg,#0f1a33,#0b1428);
+padding:25px;
+border-radius:14px;
+box-shadow:
+0 0 30px rgba(0,0,0,0.6),
+inset 0 0 12px rgba(100,200,255,0.05);
+margin-bottom:25px;
+border:1px solid rgba(100,200,255,0.08);
+}
+
+/* INPUTS */
+input{
+padding:11px;
+border:none;
+border-radius:8px;
+margin:6px;
+background:#081121;
+color:white;
+border:1px solid rgba(100,200,255,0.1);
+}
+
+input:focus{
+outline:none;
+border:1px solid #2a7fff;
+box-shadow:0 0 10px rgba(0,120,255,0.3);
+}
+
+/* BOTONES */
+button{
+padding:12px 18px;
+border:none;
+border-radius:10px;
+margin:6px;
+background:linear-gradient(45deg,#1f6fff,#00c3ff);
+color:white;
+cursor:pointer;
+transition:0.35s;
+font-weight:500;
+letter-spacing:0.5px;
+}
+
+button:hover{
+transform:translateY(-2px);
+box-shadow:
+0 0 14px #2a7fff,
+0 0 30px rgba(0,150,255,0.3);
+}
+
+/* MAPA */
+#map{
+height:520px;
+border-radius:14px;
+margin-top:15px;
+box-shadow:
+0 0 35px rgba(0,0,0,0.8),
+0 0 40px rgba(0,120,255,0.1);
+border:1px solid rgba(100,200,255,0.1);
+}
+
+/* ANALISIS */
+#analisis{
+margin-top:20px;
+background:linear-gradient(145deg,#0c162d,#091224);
+padding:25px;
+border-radius:12px;
+display:none;
+animation:fadeUp 1s ease;
+border:1px solid rgba(100,200,255,0.1);
+}
+
+/* MODAL */
+.modal{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:2000;
+}
+
+.modal-content{
+background:linear-gradient(145deg,#0e1833,#0a1224);
+padding:35px;
+border-radius:14px;
+width:650px;
+max-height:80vh;
+overflow-y:auto;
+box-shadow:0 0 50px rgba(0,0,0,0.8);
+border:1px solid rgba(120,200,255,0.15);
+}
+
+/* PARTÍCULAS DE VIENTO */
+.particle{
+position:absolute;
+width:3px;
+height:3px;
+background:#9ad9ff;
+opacity:0.5;
+animation:wind 12s linear infinite;
+}
+
+/* ANIMACIONES */
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translateY(40px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+@keyframes wind{
+from{
+transform:translateX(-200px);
+}
+to{
+transform:translateX(120vw);
+}
+}</style>
 </head>
 
 <body>
