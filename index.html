@@ -1,360 +1,1226 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind Climate Analysis System</title>
 
-<title>Wind Analysis Platform</title>
+<!-- LEAFLET -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css"/>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<!-- FIX #1: Dependencia faltante para geodesicArea -->
+<script src="https://unpkg.com/leaflet-geometryutil@0.10.3/src/leaflet.geometryutil.js"></script>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
-<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-
+<!-- EXPORTACIÓN -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
 
-/* FUENTES */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Inter:wght@300;400;500&display=swap');
-
-/* PALETA */
-:root{
---rojo:#c1121f;
---rojo-profundo:#780000;
---naranja:#e85d04;
---verde:#2d6a4f;
---azul:#00b4d8;
---fondo:#05080f;
+:root {
+  --rojo: #c1121f;
+  --rojo-profundo: #780000;
+  --naranja: #e85d04;
+  --verde: #2d6a4f;
+  --azul: #00b4d8;
+  --fondo: #05080f;
 }
 
-/* BASE */
-body{
-margin:0;
-font-family: Inter, sans-serif;
-background:
-linear-gradient(rgba(5,8,15,0.15), rgba(5,8,15,0.45)),
-url("imagen.jpg");
-background-size:cover;
-background-position:center;
-background-attachment:fixed;
-color:#f1f5ff;
-overflow-x:hidden;
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  background:
+    linear-gradient(rgba(5,8,15,0.55), rgba(5,8,15,0.75)),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 60px,
+      rgba(232,93,4,0.02) 60px,
+      rgba(232,93,4,0.02) 61px
+    ),
+    #05080f;
+  color: #f1f5ff;
+  overflow-x: hidden;
 }
 
 /* NAVBAR */
-.navbar{
-position:fixed;
-top:0;
-width:100%;
-height:60px;
-background:rgba(10,10,15,0.7);
-backdrop-filter: blur(10px);
-display:flex;
-align-items:center;
-padding-left:40px;
-z-index:1000;
-letter-spacing:2px;
-font-family: Orbitron;
-color:var(--azul);
-border-bottom:1px solid rgba(0,180,255,0.2);
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background: rgba(5,8,15,0.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 1000;
+  letter-spacing: 3px;
+  font-family: Orbitron;
+  font-size: 13px;
+  color: var(--azul);
+  border-bottom: 1px solid rgba(0,180,216,0.2);
+  justify-content: space-between;
+}
+
+.navbar-status {
+  font-size: 11px;
+  color: rgba(0,180,216,0.6);
+  letter-spacing: 1px;
 }
 
 /* HERO */
-.hero{
-height:100vh;
-background:
-linear-gradient(rgba(10,0,0,0.25), rgba(5,8,15,0.35)),
-url("imagen.jpg") center/cover no-repeat;
-display:flex;
-align-items:center;
-position:relative;
+.hero {
+  height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(120,0,0,0.35) 0%, rgba(5,8,15,0.7) 60%),
+    radial-gradient(ellipse at 30% 50%, rgba(232,93,4,0.15), transparent 60%),
+    linear-gradient(rgba(5,8,15,0.3), rgba(5,8,15,0.5));
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
 }
 
-/* LUZ CINEMATOGRÁFICA */
-.hero::before{
-content:"";
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:
-radial-gradient(circle at center,
-rgba(232,93,4,0.18),
-transparent 60%);
-pointer-events:none;
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(193,18,31,0.1), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(0,180,216,0.06), transparent 40%);
+  pointer-events: none;
 }
 
-/* TEXTO HERO */
-.hero-text{
-position:relative;
-font-size:36px;
-max-width:760px;
-margin-left:80px;
-line-height:1.5;
-font-weight:500;
-animation:fadeUp 1.5s ease;
-text-shadow:0 0 25px rgba(0,0,0,0.8);
+/* GRID DE FONDO */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(232,93,4,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232,93,4,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
 }
 
-.hero-text::after{
-content:"";
-display:block;
-height:3px;
-width:220px;
-margin-top:18px;
-background:linear-gradient(90deg,var(--rojo),var(--naranja));
+.hero-text {
+  position: relative;
+  font-size: 38px;
+  max-width: 700px;
+  margin-left: 80px;
+  line-height: 1.45;
+  font-weight: 400;
+  animation: fadeUp 1.5s ease forwards;
+  text-shadow: 0 0 40px rgba(0,0,0,0.9);
+  z-index: 1;
 }
 
-/* SECCION SOFTWARE */
-.software{
-padding:100px 40px;
-background:linear-gradient(180deg,#05080f,#0a0f1c);
+.hero-text em {
+  font-style: normal;
+  color: var(--naranja);
 }
 
-.title{
-font-size:38px;
-margin-bottom:25px;
-font-weight:600;
-font-family: Orbitron;
-color:var(--naranja);
+.hero-text::after {
+  content: "";
+  display: block;
+  height: 2px;
+  width: 200px;
+  margin-top: 22px;
+  background: linear-gradient(90deg, var(--rojo), var(--naranja), transparent);
+}
+
+/* MAIN SECTION */
+.software {
+  padding: 80px 40px 100px;
+  background: linear-gradient(180deg, #05080f 0%, #080d18 100%);
+}
+
+.title {
+  font-size: 34px;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-family: Orbitron;
+  color: var(--naranja);
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  color: rgba(241,245,255,0.4);
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  text-transform: uppercase;
 }
 
 /* PANEL */
-.panel{
-background:rgba(15,20,30,0.7);
-backdrop-filter: blur(8px);
-padding:25px;
-border-radius:14px;
-box-shadow:
-0 0 35px rgba(0,0,0,0.7),
-0 0 15px rgba(232,93,4,0.15);
-margin-bottom:25px;
-border:1px solid rgba(232,93,4,0.2);
+.panel {
+  background: rgba(10,14,24,0.8);
+  backdrop-filter: blur(10px);
+  padding: 28px 30px;
+  border-radius: 12px;
+  box-shadow:
+    0 0 50px rgba(0,0,0,0.6),
+    0 0 1px rgba(232,93,4,0.3) inset;
+  margin-bottom: 20px;
+  border: 1px solid rgba(232,93,4,0.15);
+}
+
+.panel-label {
+  font-family: Orbitron;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(232,93,4,0.6);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* CONTROLES INLINE */
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* FIX: Indicador de punto seleccionado */
+#punto-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(241,245,255,0.5);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(5,8,15,0.6);
+  transition: 0.3s;
+}
+
+#punto-indicator.activo {
+  color: #4ade80;
+  border-color: rgba(74,222,128,0.3);
+  background: rgba(74,222,128,0.07);
+}
+
+#punto-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transition: 0.3s;
+}
+
+#punto-indicator.activo .dot {
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 /* INPUTS */
-input{
-padding:11px;
-border:none;
-border-radius:8px;
-margin:6px;
-background:#081121;
-color:white;
-border:1px solid rgba(232,93,4,0.25);
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-input:focus{
-outline:none;
-border:1px solid var(--naranja);
-box-shadow:0 0 10px rgba(232,93,4,0.4);
+.input-group label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(241,245,255,0.4);
+  text-transform: uppercase;
+}
+
+input[type="number"] {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(5,8,15,0.9);
+  color: white;
+  border: 1px solid rgba(232,93,4,0.2);
+  width: 130px;
+  font-size: 14px;
+  font-family: Inter;
+  transition: 0.25s;
+}
+
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--naranja);
+  box-shadow: 0 0 12px rgba(232,93,4,0.35);
+}
+
+/* FIX: Validación en tiempo real - borde rojo si inválido */
+input[type="number"].invalido {
+  border-color: var(--rojo);
+  box-shadow: 0 0 8px rgba(193,18,31,0.3);
 }
 
 /* BOTONES */
-button{
-padding:12px 18px;
-border:none;
-border-radius:10px;
-margin:6px;
-background:linear-gradient(45deg,var(--rojo),var(--naranja));
-color:white;
-cursor:pointer;
-transition:0.35s;
-font-weight:500;
+button {
+  padding: 11px 18px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 500;
+  font-family: Inter;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
-button:hover{
-transform:translateY(-2px);
-box-shadow:
-0 0 15px var(--rojo),
-0 0 30px rgba(232,93,4,0.4);
+.btn-primary {
+  background: linear-gradient(135deg, var(--rojo-profundo), var(--naranja));
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(232,93,4,0.5);
+}
+
+.btn-secondary {
+  background: rgba(0,180,216,0.12);
+  color: var(--azul);
+  border: 1px solid rgba(0,180,216,0.25);
+}
+
+.btn-secondary:hover {
+  background: rgba(0,180,216,0.2);
+  transform: translateY(-2px);
+}
+
+.btn-ghost {
+  background: rgba(255,255,255,0.05);
+  color: rgba(241,245,255,0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: rgba(193,18,31,0.15);
+  color: #ff6b7a;
+  border: 1px solid rgba(193,18,31,0.25);
+}
+
+.btn-danger:hover {
+  background: rgba(193,18,31,0.25);
+  transform: translateY(-2px);
 }
 
 /* MAPA */
-#map{
-height:600px;
-border-radius:14px;
-margin-top:15px;
-box-shadow:
-0 0 40px rgba(0,0,0,0.8),
-0 0 25px rgba(193,18,31,0.2);
-border:1px solid rgba(193,18,31,0.25);
+#map {
+  height: 600px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow:
+    0 0 60px rgba(0,0,0,0.8),
+    0 0 0 1px rgba(193,18,31,0.2);
 }
 
 /* ANALISIS */
-#analisis{
-margin-top:20px;
-background:rgba(15,15,25,0.9);
-padding:25px;
-border-radius:12px;
-display:none;
+#analisis {
+  margin-top: 20px;
+  background: rgba(8,11,20,0.95);
+  padding: 30px;
+  border-radius: 12px;
+  display: none;
+  border: 1px solid rgba(232,93,4,0.2);
+  animation: fadeUp 0.4s ease;
+}
+
+.analisis-title {
+  font-family: Orbitron;
+  font-size: 16px;
+  color: var(--naranja);
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+/* DASHBOARD MÉTRICAS */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.metric {
+  background: rgba(5,8,15,0.9);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid rgba(193,18,31,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.metric::before {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, var(--rojo), var(--naranja));
+}
+
+.metric h3 {
+  margin: 0 0 6px;
+  font-size: 30px;
+  color: var(--naranja);
+  font-family: Orbitron;
+  font-weight: 600;
+}
+
+.metric p {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(241,245,255,0.45);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* SECCIÓN RECOMENDACIONES */
+.recomendaciones {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(45,106,79,0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(45,106,79,0.3);
+}
+
+.recomendaciones h4 {
+  font-family: Orbitron;
+  font-size: 12px;
+  color: #4ade80;
+  letter-spacing: 2px;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.recomendacion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+  color: rgba(241,245,255,0.75);
+  line-height: 1.5;
+}
+
+.recomendacion-item:last-child { border-bottom: none; }
+
+.recomendacion-item .icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ZONA RIESGO */
+.riesgo-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.riesgo-alto { background: rgba(193,18,31,0.2); color: #ff6b7a; border: 1px solid rgba(193,18,31,0.4); }
+.riesgo-medio { background: rgba(232,93,4,0.2); color: #ffa040; border: 1px solid rgba(232,93,4,0.4); }
+.riesgo-bajo { background: rgba(45,106,79,0.2); color: #4ade80; border: 1px solid rgba(45,106,79,0.4); }
+
+/* TOAST NOTIFICACIÓN */
+#toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 14px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: 0.35s;
+  pointer-events: none;
+  max-width: 320px;
+}
+
+#toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#toast.success {
+  background: rgba(74,222,128,0.15);
+  border: 1px solid rgba(74,222,128,0.35);
+  color: #4ade80;
+}
+
+#toast.error {
+  background: rgba(193,18,31,0.15);
+  border: 1px solid rgba(193,18,31,0.35);
+  color: #ff6b7a;
+}
+
+#toast.info {
+  background: rgba(0,180,216,0.12);
+  border: 1px solid rgba(0,180,216,0.3);
+  color: var(--azul);
 }
 
 /* MODAL */
-.modal{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.85);
-display:flex;
-align-items:center;
-justify-content:center;
-z-index:2000;
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
 }
 
-.modal-content{
-background:linear-gradient(145deg,#140000,#0a0f1c);
-padding:35px;
-border-radius:14px;
-width:650px;
-max-width:90%;
-max-height:80vh;
-overflow-y:auto;
+.modal-content {
+  background: linear-gradient(145deg, #100010, #070d18);
+  padding: 40px;
+  border-radius: 14px;
+  width: 620px;
+  max-width: 90%;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: 0 0 80px rgba(193,18,31,0.25), 0 0 0 1px rgba(232,93,4,0.15);
 }
 
-/* PARTICULAS */
-.particle{
-position:absolute;
-width:3px;
-height:3px;
-background:var(--naranja);
-opacity:0.4;
-animation:wind 12s linear infinite;
+.modal-content h2 {
+  font-family: Orbitron;
+  color: var(--naranja);
+  margin: 0 0 20px;
+  font-size: 18px;
+  letter-spacing: 2px;
 }
 
-/* ANIMACIONES */
-@keyframes fadeUp{
-from{opacity:0; transform:translateY(40px);}
-to{opacity:1; transform:translateY(0);}
+.modal-content p {
+  line-height: 1.7;
+  color: rgba(241,245,255,0.75);
+  font-size: 14px;
 }
 
-@keyframes wind{
-from{transform:translateX(-200px);}
-to{transform:translateX(120vw);}
+.modal-content ol {
+  padding-left: 18px;
+  color: rgba(241,245,255,0.7);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+/* PARTÍCULAS */
+.particle {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  background: var(--naranja);
+  border-radius: 50%;
+  opacity: 0;
+  animation: wind linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wind {
+  0%   { transform: translateX(-100px) translateY(0); opacity: 0; }
+  5%   { opacity: 0.35; }
+  95%  { opacity: 0.35; }
+  100% { transform: translateX(110vw) translateY(-30px); opacity: 0; }
+}
+
+/* SEPARADOR */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,93,4,0.2), transparent);
+  margin: 24px 0;
 }
 
 /* RESPONSIVE */
-@media (max-width:768px){
-
-.hero-text{
-font-size:24px;
-margin-left:30px;
-margin-right:20px;
+@media (max-width: 768px) {
+  .hero-text { font-size: 24px; margin-left: 30px; margin-right: 20px; }
+  .software { padding: 70px 18px 80px; }
+  #map { height: 400px; }
+  .navbar { padding: 0 20px; font-size: 11px; }
+  .controls-row { gap: 8px; }
 }
-
-.software{
-padding:80px 20px;
-}
-
-#map{
-height:420px;
-}
-
-.navbar{
-padding-left:20px;
-font-size:14px;
-}
-
-}
-
 </style>
 </head>
-
 <body>
 
+<!-- PARTÍCULAS -->
+<div id="particulas"></div>
+
+<!-- NAVBAR -->
 <div class="navbar">
-Wind Climate Analysis System
+  <span>◈ WIND CLIMATE ANALYSIS SYSTEM</span>
+  <span class="navbar-status" id="navbar-status">— sin datos —</span>
 </div>
+
+<!-- TOAST -->
+<div id="toast"></div>
 
 <!-- MODAL INICIAL -->
 <div id="introModal" class="modal">
-<div class="modal-content">
-
-<h2>Instrucciones del sistema</h2>
-
-<p>
-Este software trabaja junto con la maqueta del <b>anemómetro experimental</b>.
-</p>
-
-<p>
-1. Usa el anemómetro para medir la velocidad del viento en distintos puntos del terreno.<br>
-2. Luego selecciona el punto en el mapa.<br>
-3. Registra manualmente la velocidad y dirección del viento.<br>
-4. El sistema generará el análisis climático del área.
-</p>
-
-<button onclick="cerrarIntro()">Comenzar</button>
-
-</div>
+  <div class="modal-content">
+    <h2>◈ INSTRUCCIONES DEL SISTEMA</h2>
+    <p>Este software trabaja junto con la maqueta del <strong>anemómetro experimental</strong> para el análisis agroclimático de tu terreno.</p>
+    <ol>
+      <li>Usa el anemómetro para medir la velocidad del viento en distintos puntos del terreno.</li>
+      <li>Haz <strong>clic en el mapa</strong> para seleccionar el punto de medición.</li>
+      <li>Ingresa la velocidad (m/s) y dirección (0–360°).</li>
+      <li>Presiona <em>Registrar medición</em> para guardar el dato.</li>
+      <li>Opcionalmente, dibuja el polígono de tu terreno con la herramienta de dibujo.</li>
+      <li>Presiona <em>Mostrar análisis</em> para ver métricas y recomendaciones agrícolas.</li>
+    </ol>
+    <p style="margin-top:16px; font-size:12px; color:rgba(241,245,255,0.4);">Los datos se guardan automáticamente en tu navegador (localStorage).</p>
+    <button class="btn-primary" onclick="cerrarIntro()">Comenzar →</button>
+  </div>
 </div>
 
+<!-- HERO -->
 <section class="hero">
-
-<div class="hero-text">
-“No hacemos ciencia para el pueblo, somos el pueblo haciendo ciencia”.
-</div>
-
+  <div class="hero-grid"></div>
+  <div class="hero-text">
+    "No hacemos ciencia <em>para el pueblo</em>,<br>somos el pueblo haciendo ciencia."
+  </div>
 </section>
 
+<!-- SOFTWARE -->
 <section class="software" id="software">
 
-<div class="title">Plataforma de análisis agroclimático</div>
+  <div class="title">Plataforma de Análisis Agroclimático</div>
+  <div class="subtitle">Sistema de registro y análisis de viento experimental</div>
 
-<div class="panel">
-Velocidad del viento
-<input id="velocidad" type="number">
+  <!-- PANEL CONTROLES -->
+  <div class="panel">
+    <div class="panel-label">◈ Registro de medición</div>
+    <div class="controls-row">
 
-Dirección
-<input id="direccion" type="number">
+      <!-- Indicador de punto seleccionado -->
+      <div id="punto-indicator">
+        <div class="dot"></div>
+        <span id="punto-text">Haz clic en el mapa</span>
+      </div>
 
-<br>
+      <div class="input-group">
+        <label>Velocidad (m/s)</label>
+        <!-- FIX: min=0 para evitar negativos, step decimal -->
+        <input id="velocidad" type="number" min="0" step="0.1" placeholder="ej: 3.5">
+      </div>
 
-<button onclick="guardarPunto()">Registrar medición</button>
-<button onclick="mostrarAnalisis()">Mostrar análisis</button>
-<button onclick="exportarImagen()">Exportar imagen</button>
-<button onclick="exportarPDF()">Exportar PDF</button>
+      <div class="input-group">
+        <label>Dirección (0–360°)</label>
+        <!-- FIX: min=0 max=360 validado -->
+        <input id="direccion" type="number" min="0" max="360" step="1" placeholder="ej: 245">
+      </div>
 
-</div>
+      <button class="btn-primary" onclick="guardarPunto()">+ Registrar</button>
 
-<div id="map"></div>
-<div id="analisis"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="controls-row">
+      <button class="btn-secondary" onclick="mostrarAnalisis()">◈ Análisis</button>
+      <button class="btn-ghost" onclick="exportarImagen()">↓ Imagen</button>
+      <button class="btn-ghost" onclick="exportarPDF()">↓ PDF</button>
+      <button class="btn-ghost" onclick="exportarCSV()">↓ CSV</button>
+      <button class="btn-danger" onclick="limpiarDatos()">✕ Limpiar datos</button>
+    </div>
+  </div>
+
+  <!-- MAPA -->
+  <div id="map"></div>
+
+  <!-- ANÁLISIS -->
+  <div id="analisis"></div>
 
 </section>
-
-<script src="script.js"></script>
 
 <script>
 
-function cerrarIntro(){
-document.getElementById("introModal").style.display="none";
+/* ============================================================
+   PARTÍCULAS
+   ============================================================ */
+(function(){
+  const cont = document.getElementById("particulas");
+  for(let i = 0; i < 55; i++){
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.top = (Math.random() * 100) + "vh";
+    p.style.left = "-10px";
+    p.style.animationDuration = (10 + Math.random() * 14) + "s";
+    p.style.animationDelay = (Math.random() * 20) + "s";
+    p.style.opacity = Math.random() * 0.35;
+    cont.appendChild(p);
+  }
+})();
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function showToast(msg, type="success", duration=3000){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "visible " + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.className = ""; }, duration);
 }
 
+/* ============================================================
+   MAPA
+   ============================================================ */
+const map = L.map("map", {
+  center: [0.35, -78.12],
+  zoom: 14,
+  maxZoom: 22
+});
+
+const normal   = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 22, attribution: "© OSM" });
+const satelite = L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", { maxZoom: 22, subdomains:["mt0","mt1","mt2","mt3"] });
+const hibrido  = L.tileLayer("https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", { maxZoom: 22, subdomains:["mt0","mt1","mt2","mt3"] });
+
+normal.addTo(map);
+L.control.layers({ "Mapa normal": normal, "Satélite": satelite, "Híbrido": hibrido }).addTo(map);
+
+// GEOCODER
+try { L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map); } catch(e){}
+
+// DIBUJO
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+
+const drawControl = new L.Control.Draw({
+  draw: {
+    polygon: { allowIntersection: false, showArea: true },
+    rectangle: true,
+    circle: false,
+    polyline: false,
+    marker: false,
+    circlemarker: false
+  },
+  edit: { featureGroup: drawnItems }
+});
+map.addControl(drawControl);
+
+// FIX #1: usar L.GeometryUtil correctamente (ya importado)
+map.on(L.Draw.Event.CREATED, function(e){
+  const layer = e.layer;
+  drawnItems.addLayer(layer);
+  let area = 0;
+  try {
+    // GeometryUtil requiere el mapa como primer argumento
+    area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+  } catch(err){
+    // Fallback: calcular con la API nativa de Leaflet si falla
+    const lls = layer.getLatLngs()[0];
+    if(lls && lls.length){
+      // Aproximación simple por bounding box
+      const bounds = layer.getBounds();
+      const latDiff = bounds.getNorth() - bounds.getSouth();
+      const lngDiff = bounds.getEast()  - bounds.getWest();
+      const latMid  = (bounds.getNorth() + bounds.getSouth()) / 2;
+      const cosLat  = Math.cos(latMid * Math.PI / 180);
+      area = latDiff * 111320 * lngDiff * 111320 * cosLat;
+    }
+  }
+  const ha = area / 10000;
+  layer.bindPopup(
+    `<b>Área del terreno</b><br>${area.toFixed(0)} m²<br>${ha.toFixed(3)} ha`
+  ).openPopup();
+});
+
+/* ============================================================
+   VARIABLES DE ESTADO
+   FIX #2: estado encapsulado (no variables globales sueltas)
+   ============================================================ */
+const estado = {
+  lat: null,
+  lng: null,
+  puntos: [],
+  heatPoints: [],
+  heatLayer: null,
+  arrowLayers: []
+};
+
+// FIX #4: persistencia localStorage
+function cargarDatos(){
+  try {
+    const raw = localStorage.getItem("wind_puntos");
+    if(raw){
+      const guardados = JSON.parse(raw);
+      guardados.forEach(p => agregarPuntoAlMapa(p));
+      showToast(`${guardados.length} mediciones restauradas`, "info");
+    }
+  } catch(e){}
+}
+
+function guardarEnStorage(){
+  try {
+    localStorage.setItem("wind_puntos", JSON.stringify(estado.puntos));
+  } catch(e){}
+}
+
+/* ============================================================
+   CLICK EN MAPA
+   FIX: feedback visual al seleccionar punto
+   ============================================================ */
+let marcadorTemporal = null;
+
+map.on("click", function(e){
+  estado.lat = e.latlng.lat;
+  estado.lng = e.latlng.lng;
+
+  // Indicador visual
+  const indicator = document.getElementById("punto-indicator");
+  indicator.classList.add("activo");
+  document.getElementById("punto-text").textContent =
+    `${estado.lat.toFixed(5)}, ${estado.lng.toFixed(5)}`;
+
+  // Marcador temporal de cursor
+  if(marcadorTemporal) map.removeLayer(marcadorTemporal);
+  marcadorTemporal = L.circleMarker([estado.lat, estado.lng], {
+    radius: 8,
+    color: "#e85d04",
+    fillColor: "#e85d04",
+    fillOpacity: 0.4,
+    weight: 2
+  }).addTo(map);
+});
+
+/* ============================================================
+   GUARDAR MEDICIÓN
+   FIX #3: validación robusta
+   ============================================================ */
+function guardarPunto(){
+  const velInput = document.getElementById("velocidad");
+  const dirInput = document.getElementById("direccion");
+
+  const velocidad = parseFloat(velInput.value);
+  const direccion = parseFloat(dirInput.value);
+
+  // Validar coordenadas
+  if(estado.lat === null || estado.lng === null){
+    showToast("Primero haz clic en el mapa para seleccionar un punto", "error");
+    return;
+  }
+
+  // FIX #3: validar velocidad
+  let valido = true;
+  velInput.classList.remove("invalido");
+  dirInput.classList.remove("invalido");
+
+  if(isNaN(velocidad) || velocidad < 0){
+    velInput.classList.add("invalido");
+    valido = false;
+  }
+  if(isNaN(direccion) || direccion < 0 || direccion > 360){
+    dirInput.classList.add("invalido");
+    valido = false;
+  }
+  if(!valido){
+    showToast("Verifica los valores: velocidad ≥ 0, dirección 0–360°", "error");
+    return;
+  }
+
+  const punto = {
+    lat: estado.lat,
+    lng: estado.lng,
+    velocidad: velocidad,
+    direccion: direccion,
+    timestamp: Date.now()
+  };
+
+  estado.puntos.push(punto);
+  agregarPuntoAlMapa(punto);
+  guardarEnStorage();
+  actualizarNavbar();
+
+  // FIX: limpiar inputs y resetear estado
+  velInput.value = "";
+  dirInput.value = "";
+  estado.lat = null;
+  estado.lng = null;
+
+  if(marcadorTemporal){ map.removeLayer(marcadorTemporal); marcadorTemporal = null; }
+
+  const ind = document.getElementById("punto-indicator");
+  ind.classList.remove("activo");
+  document.getElementById("punto-text").textContent = "Haz clic en el mapa";
+
+  showToast(`Medición #${estado.puntos.length} registrada correctamente`, "success");
+}
+
+/* ============================================================
+   AGREGAR PUNTO AL MAPA (marcador + flecha + heatmap)
+   FIX #9: flechas de dirección del viento
+   ============================================================ */
+function agregarPuntoAlMapa(punto){
+  // Marcador principal
+  const icono = L.divIcon({
+    html: `<div style="
+      width:10px; height:10px;
+      background:linear-gradient(135deg,#c1121f,#e85d04);
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,0.5);
+      box-shadow:0 0 8px rgba(232,93,4,0.7);
+    "></div>`,
+    iconSize: [10,10],
+    iconAnchor: [5,5],
+    className: ""
+  });
+
+  L.marker([punto.lat, punto.lng], { icon: icono })
+    .addTo(map)
+    .bindPopup(`
+      <div style="font-family:sans-serif;font-size:13px;min-width:140px;">
+        <b style="color:#e85d04;">◈ Medición #${estado.puntos.length || "?"}</b><br>
+        <span>💨 ${punto.velocidad} m/s</span><br>
+        <span>🧭 ${punto.direccion}°</span><br>
+        <span style="color:#aaa;font-size:11px;">${punto.lat.toFixed(5)}, ${punto.lng.toFixed(5)}</span>
+      </div>
+    `);
+
+  // FIX #9: Flecha de dirección vectorial en SVG
+  dibujarFlecha(punto);
+
+  // Heatmap
+  estado.heatPoints.push([punto.lat, punto.lng, punto.velocidad]);
+  actualizarHeatmap();
+}
+
+/* ============================================================
+   FLECHA SVG DE DIRECCIÓN
+   FIX #9
+   ============================================================ */
+function dibujarFlecha(punto){
+  // La dirección meteorológica es "de donde viene", la flecha apunta a donde va
+  const rad = (punto.direccion - 90) * Math.PI / 180;
+  const longitud = 0.0004 + punto.velocidad * 0.00005;
+
+  const lat2 = punto.lat + longitud * Math.sin((punto.direccion) * Math.PI / 180);
+  const lng2 = punto.lng + longitud * Math.cos((punto.direccion) * Math.PI / 180);
+
+  // Intensidad del color según velocidad
+  const intensidad = Math.min(punto.velocidad / 10, 1);
+  const r = Math.round(193 + (232-193)*intensidad);
+  const g = Math.round(18 + (93-18)*intensidad);
+  const b = 4;
+  const color = `rgb(${r},${g},${b})`;
+
+  const flecha = L.polyline([[punto.lat, punto.lng], [lat2, lng2]], {
+    color: color,
+    weight: 2 + punto.velocidad * 0.15,
+    opacity: 0.85
+  }).addTo(map);
+
+  // Cabeza de flecha como CircleMarker en la punta
+  L.circleMarker([lat2, lng2], {
+    radius: 4,
+    color: color,
+    fillColor: color,
+    fillOpacity: 1,
+    weight: 1
+  }).addTo(map);
+
+  estado.arrowLayers.push(flecha);
+}
+
+/* ============================================================
+   MAPA DE CALOR
+   FIX #4: normalización básica
+   ============================================================ */
+function actualizarHeatmap(){
+  if(estado.heatLayer) map.removeLayer(estado.heatLayer);
+
+  // FIX #4: normalizar intensidades
+  const maxVel = Math.max(...estado.heatPoints.map(h => h[2]), 1);
+  const normalized = estado.heatPoints.map(h => [h[0], h[1], h[2]/maxVel]);
+
+  estado.heatLayer = L.heatLayer(normalized, {
+    radius: 40,
+    blur: 28,
+    maxZoom: 22,
+    gradient: { 0.0: "#00b4d8", 0.4: "#e85d04", 0.7: "#c1121f", 1.0: "#780000" }
+  }).addTo(map);
+}
+
+/* ============================================================
+   ANÁLISIS
+   FIX #5: dirección dominante por promedio vectorial
+   FIX #6: análisis agrícola real
+   ============================================================ */
+function analizarDatos(){
+  const panel = document.getElementById("analisis");
+
+  if(estado.puntos.length === 0){
+    panel.innerHTML = `<p style="color:rgba(241,245,255,0.5); text-align:center;">No hay datos registrados. Registra al menos una medición.</p>`;
+    return;
+  }
+
+  // --- Métricas básicas ---
+  let suma = 0, max = 0, min = Infinity;
+  estado.puntos.forEach(p => {
+    suma += p.velocidad;
+    if(p.velocidad > max) max = p.velocidad;
+    if(p.velocidad < min) min = p.velocidad;
+  });
+  const promedio = suma / estado.puntos.length;
+
+  // FIX #5: Dirección dominante por promedio vectorial
+  let vx = 0, vy = 0;
+  estado.puntos.forEach(p => {
+    const rad = p.direccion * Math.PI / 180;
+    vx += p.velocidad * Math.cos(rad);
+    vy += p.velocidad * Math.sin(rad);
+  });
+  const dirDominante = ((Math.atan2(vy, vx) * 180 / Math.PI) + 360) % 360;
+  const nombresDir = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
+  const idxDir = Math.round(dirDominante / 22.5) % 16;
+  const dirNombre = nombresDir[idxDir];
+
+  // FIX #6: Análisis agrícola
+  let nivelRiesgo, recomendaciones;
+  if(promedio < 2){
+    nivelRiesgo = "bajo";
+    recomendaciones = [
+      { icon: "🌱", texto: "Viento suave: condiciones favorables para la mayoría de cultivos sensibles." },
+      { icon: "💧", texto: "Evapotranspiración baja — riego puede reducirse en ~10-15%." },
+      { icon: "🌾", texto: "Buenas condiciones para cultivos de hoja como lechuga, espinaca y cilantro." },
+      { icon: "✅", texto: "No se requieren barreras rompeviento en zonas planas." }
+    ];
+  } else if(promedio < 5){
+    nivelRiesgo = "medio";
+    recomendaciones = [
+      { icon: "🌳", texto: `Viento moderado desde el ${dirNombre}: considera barreras rompeviento en esa orientación.` },
+      { icon: "🌽", texto: "Orienta surcos perpendiculares a la dirección dominante para reducir erosión." },
+      { icon: "💧", texto: "Incrementa monitoreo de humedad del suelo — la evapotranspiración aumenta." },
+      { icon: "⚠️", texto: "Cultivos de tallo frágil (girasol, maíz en etapa temprana) pueden necesitar tutores." },
+      { icon: "🔍", texto: `Instalar más puntos de medición en zona ${dirNombre} para mapear la variabilidad.` }
+    ];
+  } else {
+    nivelRiesgo = "alto";
+    recomendaciones = [
+      { icon: "🚧", texto: `Viento fuerte desde el ${dirNombre}: riesgo de erosión significativo. Instala barreras urgentes.` },
+      { icon: "🌿", texto: "Prioriza cultivos de raíz profunda o de porte bajo (tubérculos, hortalizas rastreras)." },
+      { icon: "💧", texto: "La evapotranspiración es alta — aumenta frecuencia de riego y considera mulching." },
+      { icon: "🏗️", texto: "Evalúa cortinas forestales o mallas cortaviento en el perímetro expuesto." },
+      { icon: "❌", texto: "Evita transplantes y siembras directas en días con viento superior a 6 m/s." },
+      { icon: "📊", texto: "Considera datos históricos de velocidad para planificar calendarios de siembra." }
+    ];
+  }
+
+  const riesgoClass = `riesgo-${nivelRiesgo}`;
+  const riesgoLabel = nivelRiesgo === "alto" ? "Riesgo alto" : nivelRiesgo === "medio" ? "Riesgo moderado" : "Riesgo bajo";
+
+  const recsHTML = recomendaciones.map(r =>
+    `<div class="recomendacion-item"><span class="icon">${r.icon}</span><span>${r.texto}</span></div>`
+  ).join("");
+
+  panel.innerHTML = `
+    <div class="analisis-title">◈ Resultados del análisis</div>
+
+    <div class="dashboard">
+      <div class="metric">
+        <h3>${estado.puntos.length}</h3>
+        <p>Puntos medidos</p>
+      </div>
+      <div class="metric">
+        <h3>${promedio.toFixed(2)}</h3>
+        <p>Vel. promedio (m/s)</p>
+      </div>
+      <div class="metric">
+        <h3>${max.toFixed(1)}</h3>
+        <p>Vel. máxima (m/s)</p>
+      </div>
+      <div class="metric">
+        <h3>${min.toFixed(1)}</h3>
+        <p>Vel. mínima (m/s)</p>
+      </div>
+      <div class="metric">
+        <h3>${dirDominante.toFixed(0)}°</h3>
+        <p>Dir. dominante (${dirNombre})</p>
+      </div>
+      <div class="metric">
+        <span class="riesgo-badge ${riesgoClass}">${riesgoLabel}</span>
+        <p style="margin-top:8px;">Erosión potencial</p>
+      </div>
+    </div>
+
+    <div class="recomendaciones">
+      <h4>◈ Recomendaciones agrícolas</h4>
+      ${recsHTML}
+    </div>
+  `;
+}
+
+/* ============================================================
+   EXPORTAR IMAGEN
+   FIX #7: captura solo la sección relevante
+   ============================================================ */
+function exportarImagen(){
+  const seccion = document.getElementById("software");
+  showToast("Generando imagen…", "info", 5000);
+  html2canvas(seccion, { useCORS: true, scale: 1.5 }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "analisis_viento.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    showToast("Imagen exportada correctamente", "success");
+  }).catch(()=>{ showToast("Error al generar imagen", "error"); });
+}
+
+/* ============================================================
+   EXPORTAR PDF
+   ============================================================ */
+async function exportarPDF(){
+  showToast("Generando PDF…", "info", 6000);
+  try {
+    const { jsPDF } = window.jspdf;
+    const seccion = document.getElementById("software");
+    const canvas = await html2canvas(seccion, { useCORS: true, scale: 1.2 });
+    const img = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("landscape", "mm", "a4");
+
+    const pdfW = pdf.internal.pageSize.getWidth();
+    const pdfH = pdf.internal.pageSize.getHeight();
+    const ratio = canvas.height / canvas.width;
+    const imgH = pdfW * ratio;
+    let posY = 10;
+    let imgRestante = imgH;
+
+    // Si el contenido excede una página, paginar
+    if(imgRestante <= pdfH - 20){
+      pdf.addImage(img, "PNG", 5, posY, pdfW - 10, imgH);
+    } else {
+      // Recortar en páginas
+      const pageH = pdfH - 20;
+      let pages = Math.ceil(imgH / pageH);
+      for(let i = 0; i < pages; i++){
+        if(i > 0) pdf.addPage();
+        pdf.addImage(img, "PNG", 5, posY - i * pageH, pdfW - 10, imgH);
+        // Clip con rectángulo blanco
+      }
+    }
+
+    // Pie de página
+    pdf.setFontSize(9);
+    pdf.setTextColor(120,120,120);
+    pdf.text(`Wind Climate Analysis System · ${new Date().toLocaleDateString("es")} · ${estado.puntos.length} mediciones`, 10, pdfH - 5);
+
+    pdf.save("reporte_viento.pdf");
+    showToast("PDF exportado correctamente", "success");
+  } catch(e){
+    console.error(e);
+    showToast("Error al generar PDF", "error");
+  }
+}
+
+/* ============================================================
+   EXPORTAR CSV
+   FIX #7 extra: formato CSV
+   ============================================================ */
+function exportarCSV(){
+  if(estado.puntos.length === 0){
+    showToast("No hay datos para exportar", "error"); return;
+  }
+  let csv = "latitud,longitud,velocidad_ms,direccion_deg,timestamp\n";
+  estado.puntos.forEach(p => {
+    csv += `${p.lat},${p.lng},${p.velocidad},${p.direccion},${new Date(p.timestamp).toISOString()}\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "datos_viento.csv";
+  link.click();
+  showToast("CSV exportado correctamente", "success");
+}
+
+/* ============================================================
+   LIMPIAR DATOS
+   ============================================================ */
+function limpiarDatos(){
+  if(estado.puntos.length === 0){ showToast("No hay datos para limpiar", "info"); return; }
+  if(!confirm(`¿Eliminar las ${estado.puntos.length} mediciones registradas?`)) return;
+  estado.puntos = [];
+  estado.heatPoints = [];
+  estado.arrowLayers = [];
+  if(estado.heatLayer){ map.removeLayer(estado.heatLayer); estado.heatLayer = null; }
+  localStorage.removeItem("wind_puntos");
+  // Recargar mapa (quitar todos los layers y re-añadir base)
+  map.eachLayer(layer => {
+    if(layer !== normal && layer !== satelite && layer !== hibrido && !(layer instanceof L.Control.Draw)){
+      try { map.removeLayer(layer); } catch(e){}
+    }
+  });
+  normal.addTo(map);
+  map.addLayer(drawnItems);
+  document.getElementById("analisis").style.display = "none";
+  actualizarNavbar();
+  showToast("Datos eliminados", "info");
+}
+
+/* ============================================================
+   NAVBAR DINÁMICA
+   ============================================================ */
+function actualizarNavbar(){
+  const n = estado.puntos.length;
+  document.getElementById("navbar-status").textContent =
+    n === 0 ? "— sin datos —" : `${n} medición${n !== 1 ? "es" : ""} registrada${n !== 1 ? "s" : ""}`;
+}
+
+/* ============================================================
+   MOSTRAR ANÁLISIS
+   ============================================================ */
 function mostrarAnalisis(){
-document.getElementById("analisis").style.display="block";
-if(typeof analizarDatos === "function"){
-analizarDatos();
-}
+  const panel = document.getElementById("analisis");
+  panel.style.display = "block";
+  analizarDatos();
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* PARTICULAS */
-for(let i=0;i<70;i++){
-let p=document.createElement("div");
-p.className="particle";
-p.style.top=Math.random()*100+"vh";
-p.style.animationDuration=(8+Math.random()*10)+"s";
-document.body.appendChild(p);
+/* ============================================================
+   MODAL
+   ============================================================ */
+function cerrarIntro(){
+  document.getElementById("introModal").style.display = "none";
 }
+
+/* ============================================================
+   INIT: cargar datos persistidos
+   ============================================================ */
+cargarDatos();
+actualizarNavbar();
 
 </script>
-
 </body>
 </html>
