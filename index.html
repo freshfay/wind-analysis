@@ -1238,7 +1238,10 @@ Responde ÚNICAMENTE con un objeto JSON con esta estructura exacta (sin texto fu
 
 Genera entre 4 y 6 recomendaciones. Sé específico con los datos: menciona valores concretos, coordenadas si es relevante, y el lugar.`;
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  // 👇 Cambia esta URL por la de tu Cloudflare Worker
+  const WORKER_URL = "https://TU-WORKER.TU-USUARIO.workers.dev";
+
+  const response = await fetch(WORKER_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
